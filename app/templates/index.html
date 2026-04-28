@@ -1,261 +1,305 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>TechDebt Analyzer</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>tailwind.config = { darkMode: 'class' }</script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <title>Analyze — TechDebt</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
   <style>
-    * { font-family: 'Inter', sans-serif; }
-    code, .mono { font-family: 'JetBrains Mono', monospace; }
-    .gradient-bg {
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { background:#05050a; font-family:'Inter',sans-serif; color:white; min-height:100vh; cursor:none; overflow-x:hidden; }
+
+    /* ── Cursor ── */
+    .cursor { position:fixed; width:10px; height:10px; background:white; border-radius:50%; pointer-events:none; z-index:9999; }
+    .cursor-follower { position:fixed; width:30px; height:30px; border:1px solid rgba(255,255,255,0.2); border-radius:50%; pointer-events:none; z-index:9998; }
+
+    /* ── Background ── */
+    .glow-bg {
+      position:fixed; inset:0; z-index:-1;
       background:
-        radial-gradient(ellipse at 20% 50%, rgba(16,185,129,0.07) 0%, transparent 55%),
-        radial-gradient(ellipse at 80% 10%, rgba(99,102,241,0.07) 0%, transparent 55%),
-        radial-gradient(ellipse at 60% 80%, rgba(234,179,8,0.04) 0%, transparent 50%),
-        #020817;
+        radial-gradient(ellipse at 80% 20%, rgba(99,40,255,0.09) 0%, transparent 55%),
+        radial-gradient(ellipse at 20% 80%, rgba(0,180,255,0.06) 0%, transparent 55%);
     }
-    .glass {
-      background: rgba(255,255,255,0.03);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(255,255,255,0.07);
+
+    /* ── Navbar ── */
+    nav {
+      position:fixed; top:0; left:0; right:0; z-index:100;
+      padding:1.2rem 2.5rem; display:flex; justify-content:space-between; align-items:center;
+      backdrop-filter:blur(12px); background:rgba(5,5,10,0.6);
+      border-bottom:1px solid rgba(255,255,255,0.05);
     }
-    .glass-hover { transition: all 0.3s ease; }
-    .glass-hover:hover {
-      background: rgba(255,255,255,0.05);
-      border-color: rgba(16,185,129,0.25);
-      transform: translateY(-2px);
-      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    .nav-logo { font-family:'Syne',sans-serif; font-size:1.1rem; font-weight:800; display:flex; align-items:center; gap:0.5rem; }
+    .nav-logo span { color:rgba(99,40,255,0.9); }
+    .nav-logo .nav-sep { color:rgba(255,255,255,0.15); font-weight:300; font-size:1rem; }
+    .nav-logo .nav-page { font-family:'Inter',sans-serif; font-size:0.85rem; font-weight:500; color:rgba(255,255,255,0.4); }
+    .nav-home-btn {
+      display:flex; align-items:center; gap:0.4rem;
+      padding:0.4rem 1rem; background:rgba(255,255,255,0.04);
+      border:1px solid rgba(255,255,255,0.07); border-radius:999px;
+      color:rgba(255,255,255,0.5); font-size:0.82rem; font-weight:500;
+      cursor:pointer; transition:all 0.2s; font-family:'Inter',sans-serif;
     }
-    .glow-green  { box-shadow: 0 0 40px rgba(16,185,129,0.12); }
-    .glow-red    { box-shadow: 0 0 30px rgba(239,68,68,0.08); }
-    .glow-yellow { box-shadow: 0 0 30px rgba(234,179,8,0.08); }
-    .fade-up { animation: fadeUp 0.5s ease forwards; opacity: 0; }
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(18px); }
-      to   { opacity: 1; transform: translateY(0); }
+    .nav-home-btn:hover { background:rgba(255,255,255,0.08); color:white; }
+
+    /* ── Page Transition ── */
+    .page-transition { position:fixed; inset:0; background:#05050a; z-index:99999; opacity:0; pointer-events:none; transition:opacity 0.5s ease; }
+    .page-transition.active { opacity:1; pointer-events:all; }
+
+    /* ── Layout — app-like, not hero ── */
+    .main {
+      position:relative; z-index:1;
+      min-height:100vh;
+      display:flex; flex-direction:column;
+      align-items:center; justify-content:center;
+      padding:5rem 1.5rem 3rem;
     }
-    .s1{animation-delay:.05s} .s2{animation-delay:.15s}
-    .s3{animation-delay:.25s} .s4{animation-delay:.35s}
-    .s5{animation-delay:.45s} .s6{animation-delay:.55s}
-    .issue-card {
-      border-left: 2px solid var(--ic);
-      transition: all 0.2s ease;
+
+    /* ── Page Header — small, not a hero ── */
+    .page-header {
+      width:100%; max-width:680px;
+      margin-bottom:1.5rem;
+      display:flex; align-items:center; gap:0.8rem;
     }
-    .issue-card:hover {
-      background: rgba(255,255,255,0.025);
-      padding-left: 1.25rem;
+    .page-header-line {
+      flex:1; height:1px;
+      background:linear-gradient(90deg, rgba(99,40,255,0.3), transparent);
     }
-    .tag {
-      font-size: 0.6rem;
-      padding: 2px 8px;
-      border-radius: 999px;
-      font-weight: 700;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
+    .page-header-tag {
+      font-size:0.72rem; font-weight:600; letter-spacing:0.12em;
+      text-transform:uppercase; color:rgba(99,40,255,0.7);
     }
-    .progress-bar {
-      height: 3px; border-radius: 4px;
-      background: rgba(255,255,255,0.05);
-      overflow: hidden; flex: 1;
+
+    /* ── Main Card ── */
+    .analyze-card {
+      width:100%; max-width:680px;
+      background:rgba(255,255,255,0.025);
+      border:1px solid rgba(255,255,255,0.07);
+      border-radius:18px; overflow:hidden;
     }
-    .progress-fill {
-      height: 100%; border-radius: 4px;
-      width: 0%; transition: width 0.5s ease;
+
+    /* Card Top Section */
+    .card-top {
+      padding:1.8rem 2rem 1.5rem;
+      border-bottom:1px solid rgba(255,255,255,0.05);
     }
-    .score-bar {
-      width: 3px; height: 52px; border-radius: 4px;
-      background: rgba(255,255,255,0.05); overflow: hidden;
+    .card-title {
+      font-family:'Syne',sans-serif; font-size:1.3rem;
+      font-weight:800; margin-bottom:0.4rem; letter-spacing:-0.3px;
     }
-    .score-bar-fill {
-      width: 100%; border-radius: 4px;
-      transition: height 1.2s ease;
+    .card-subtitle {
+      font-size:0.82rem; color:rgba(255,255,255,0.35); line-height:1.6;
     }
-    ::-webkit-scrollbar { width: 5px; height: 5px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+
+    /* Card Input Section */
+    .card-body { padding:1.5rem 2rem; }
+
+    .input-label {
+      font-size:0.75rem; font-weight:600; color:rgba(255,255,255,0.4);
+      text-transform:uppercase; letter-spacing:0.08em; margin-bottom:0.6rem;
+    }
+    .input-wrap {
+      display:flex; align-items:center; gap:0.6rem;
+      background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08);
+      border-radius:10px; padding:0 1rem; margin-bottom:0.8rem;
+      transition:border-color 0.3s, box-shadow 0.3s;
+    }
+    .input-wrap:focus-within {
+      border-color:rgba(99,40,255,0.4);
+      box-shadow:0 0 0 3px rgba(99,40,255,0.07);
+    }
+    .input-icon { font-size:0.85rem; opacity:0.25; flex-shrink:0; }
+    .repo-input {
+      flex:1; padding:0.85rem 0; background:transparent;
+      border:none; outline:none; color:white;
+      font-size:0.88rem; font-family:'Inter',sans-serif;
+    }
+    .repo-input::placeholder { color:rgba(255,255,255,0.15); }
+
+    /* Submit Button */
+    .analyze-btn {
+      width:100%; padding:0.85rem;
+      background:white; color:#05050a;
+      font-weight:700; font-size:0.9rem;
+      border:none; border-radius:10px; cursor:pointer;
+      font-family:'Inter',sans-serif;
+      display:flex; align-items:center; justify-content:center; gap:0.5rem;
+      transition:transform 0.2s, box-shadow 0.2s, background 0.2s;
+    }
+    .analyze-btn:hover { transform:translateY(-1px); box-shadow:0 6px 24px rgba(255,255,255,0.12); }
+    .analyze-btn:active { transform:scale(0.99); }
+    .analyze-btn.loading {
+      background:rgba(255,255,255,0.1); color:rgba(255,255,255,0.4);
+      cursor:not-allowed; transform:none; box-shadow:none;
+    }
+    .btn-spinner {
+      width:14px; height:14px; border:2px solid rgba(0,0,0,0.15);
+      border-top-color:#05050a; border-radius:50%;
+      animation:spin 0.7s linear infinite; display:none;
+    }
+    .analyze-btn.loading .btn-spinner { display:block; }
+    .analyze-btn.loading .btn-text { display:none; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+
+    /* Card Footer */
+    .card-footer {
+      padding:1rem 2rem 1.5rem;
+      border-top:1px solid rgba(255,255,255,0.04);
+    }
+    .footer-label {
+      font-size:0.68rem; color:rgba(255,255,255,0.2);
+      text-transform:uppercase; letter-spacing:0.1em; margin-bottom:0.6rem;
+    }
+    .tech-tags { display:flex; flex-wrap:wrap; gap:0.4rem; }
+    .tech-tag {
+      font-size:0.68rem; font-weight:500;
+      color:rgba(255,255,255,0.25); background:rgba(255,255,255,0.03);
+      border:1px solid rgba(255,255,255,0.06);
+      padding:0.25rem 0.65rem; border-radius:999px; transition:all 0.2s; cursor:default;
+    }
+    .tech-tag:hover { color:rgba(99,40,255,0.8); border-color:rgba(99,40,255,0.25); background:rgba(99,40,255,0.05); }
+
+    /* ── Info Row below card ── */
+    .info-row {
+      width:100%; max-width:680px; margin-top:1.2rem;
+      display:flex; justify-content:space-between; align-items:center;
+      flex-wrap:wrap; gap:0.5rem;
+    }
+    .info-item {
+      display:flex; align-items:center; gap:0.4rem;
+      font-size:0.75rem; color:rgba(255,255,255,0.2);
+    }
+    .info-dot { width:4px; height:4px; background:rgba(99,40,255,0.5); border-radius:50%; }
+
+    /* ── Toast ── */
+    .toast {
+      position:fixed; bottom:2rem; left:50%;
+      transform:translateX(-50%) translateY(80px);
+      background:rgba(5,5,10,0.95); color:rgba(255,100,100,0.85);
+      border:1px solid rgba(255,80,80,0.15);
+      padding:0.65rem 1.3rem; border-radius:999px; font-size:0.82rem;
+      z-index:9999; transition:transform 0.4s ease; pointer-events:none; white-space:nowrap;
+    }
+    .toast.show { transform:translateX(-50%) translateY(0); }
   </style>
 </head>
-<body class="gradient-bg text-slate-100 min-h-screen">
+<body>
+
+  <div class="page-transition" id="page-transition"></div>
+  <div class="cursor" id="cursor"></div>
+  <div class="cursor-follower" id="cursor-follower"></div>
+  <div class="glow-bg"></div>
+  <div class="toast" id="toast">⚠ Please enter a valid GitHub repo URL</div>
 
   <!-- Navbar -->
-  <nav class="sticky top-0 z-50 glass border-b border-white/5">
-    <div class="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <div class="w-8 h-8 rounded-lg bg-emerald-500/15 border border-emerald-500/20 flex items-center justify-center">
-          <span class="text-sm">⚡</span>
-        </div>
-        <span class="font-bold text-white text-sm">TechDebt</span>
-        <span class="font-light text-emerald-400 text-sm">Analyzer</span>
-        <span class="tag bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">AI</span>
-      </div>
-      <div class="flex items-center gap-3">
-        <button id="themeToggle"
-          class="w-8 h-8 rounded-lg glass flex items-center justify-center hover:border-emerald-500/30 transition text-xs">
-          🌙
-        </button>
-        <a href="/"
-          class="px-4 py-2 rounded-xl bg-slate-800 border border-white/10 text-slate-400 hover:text-white text-xs font-semibold transition">
-          ← Home
-        </a>
-      </div>
+  <nav>
+    <div class="nav-logo">
+      TechDebt<span>.</span>
+      <span class="nav-sep">/</span>
+      <span class="nav-page">Analyze</span>
     </div>
+    <button class="nav-home-btn" onclick="goTo('/')">← Home</button>
   </nav>
 
-  <main class="max-w-7xl mx-auto px-6 py-14 space-y-8">
+  <main class="main">
 
-    <!-- Hero -->
-    <section class="text-center space-y-5 fade-up s1">
-      <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass text-xs text-slate-500 border border-white/5">
-        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-        Real-time · Line-level · AI-powered analysis
-      </div>
-      <h1 class="text-4xl md:text-6xl font-extrabold tracking-tight leading-tight">
-        Find
-        <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400">
-          technical debt
-        </span>
-        <br/>before it finds you
-      </h1>
-      <p class="text-slate-500 text-base md:text-lg max-w-lg mx-auto leading-relaxed">
-        Paste any public GitHub repository URL and get a full AI-powered health report in under 90 seconds.
-      </p>
-    </section>
-
-    <!-- Panel: GitHub Repo -->
-    <section id="panelRepo" class="glass rounded-2xl p-6 glow-green fade-up s2">
-      <p class="text-slate-500 text-sm mb-4">
-        Analyze any public Python GitHub repository — commit history, all files, security and AI review.
-      </p>
-      <div class="flex flex-col md:flex-row gap-3">
-        <div class="relative flex-1">
-          <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 pointer-events-none">🔗</span>
-          <input id="repoUrl" type="text"
-            placeholder="https://github.com/username/repository"
-            class="w-full pl-10 pr-4 py-3.5 rounded-xl bg-white/5 border border-white/8 focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/15 outline-none text-slate-200 placeholder-slate-600 text-sm transition"
-          />
-        </div>
-        <button id="analyzeBtn"
-          class="px-8 py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-slate-950 font-bold text-sm transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-emerald-500/25 whitespace-nowrap">
-          Analyze Repo →
-        </button>
-      </div>
-      <div class="mt-4 flex flex-wrap gap-2">
-        <span class="tag bg-slate-800/80 text-slate-500 border border-white/5">GitHub API</span>
-        <span class="tag bg-slate-800/80 text-slate-500 border border-white/5">Radon Complexity</span>
-        <span class="tag bg-slate-800/80 text-slate-500 border border-white/5">Bandit Security</span>
-        <span class="tag bg-slate-800/80 text-slate-500 border border-white/5">GPT-4o Review</span>
-        <span class="tag bg-slate-800/80 text-slate-500 border border-white/5">Gradient Boosting ML</span>
-      </div>
-    </section>
-
-    <!-- Loading -->
-    <div id="loading" class="hidden">
-      <div class="glass rounded-2xl p-10 text-center">
-        <div class="relative w-14 h-14 mx-auto mb-6">
-          <div class="absolute inset-0 rounded-full border-2 border-white/5"></div>
-          <div class="absolute inset-0 rounded-full border-2 border-emerald-500 border-t-transparent animate-spin"></div>
-          <span class="absolute inset-0 flex items-center justify-center text-lg" id="loadingIcon">⚙️</span>
-        </div>
-        <h3 class="text-white font-semibold text-lg mb-1" id="loadingTitle">Analyzing...</h3>
-        <p class="text-slate-600 text-sm mb-8" id="loadingSubtitle">Please wait</p>
-        <div id="loadingSteps" class="space-y-4 text-left max-w-md mx-auto"></div>
-      </div>
+    <!-- Small page header -->
+    <div class="page-header">
+      <span class="page-header-tag">Repository Analysis</span>
+      <div class="page-header-line"></div>
     </div>
 
-    <!-- Error -->
-    <div id="errorBox" class="hidden glass rounded-2xl p-5 border border-red-500/20 glow-red">
-      <div class="flex items-start gap-3">
-        <span class="text-xl shrink-0">❌</span>
-        <div>
-          <p class="text-red-400 font-semibold text-sm mb-1">Analysis Failed</p>
-          <p id="errorMsg" class="text-slate-400 text-sm leading-6"></p>
-        </div>
+    <!-- Main Card -->
+    <div class="analyze-card">
+
+      <!-- Card Top -->
+      <div class="card-top">
+        <div class="card-title">Analyze a Repository</div>
+        <div class="card-subtitle">Enter a public GitHub repo URL to scan for technical debt, security issues, and code complexity.</div>
       </div>
-    </div>
 
-    <!-- Repo Results -->
-    <div id="repoResults" class="hidden space-y-6 fade-up s4">
-
-      <!-- Summary bar -->
-      <div class="glass rounded-2xl p-5 flex flex-col md:flex-row md:items-center gap-5">
-        <div class="flex-1 min-w-0">
-          <div class="flex items-center gap-2 mb-1">
-            <span class="text-xs text-slate-600 font-semibold uppercase tracking-widest">Repository</span>
+      <!-- Card Body -->
+      <div class="card-body">
+        <div class="input-label">Repository URL</div>
+        <form id="analyze-form" action="/api/analyze" method="POST">
+          <div class="input-wrap">
+            <span class="input-icon">🔗</span>
+            <input
+              type="text" name="repo_url" id="repo-input"
+              class="repo-input"
+              placeholder="https://github.com/username/repository"
+              autocomplete="off"
+            />
           </div>
-          <a id="repoLink" href="#" target="_blank"
-            class="mono text-sm text-emerald-400 hover:text-emerald-300 truncate block transition">
-          </a>
-        </div>
-        <div class="flex flex-wrap gap-6 shrink-0">
-          <div class="text-center">
-            <p class="text-2xl font-black text-white" id="statTotal">0</p>
-            <p class="text-xs text-slate-600 mt-0.5">Files</p>
-          </div>
-          <div class="text-center">
-            <p class="text-2xl font-black text-red-400" id="statCritical">0</p>
-            <p class="text-xs text-slate-600 mt-0.5">Critical</p>
-          </div>
-          <div class="text-center">
-            <p class="text-2xl font-black text-yellow-400" id="statModerate">0</p>
-            <p class="text-xs text-slate-600 mt-0.5">Moderate</p>
-          </div>
-          <div class="text-center">
-            <p class="text-2xl font-black text-slate-300" id="statIssues">0</p>
-            <p class="text-xs text-slate-600 mt-0.5">Issues</p>
-          </div>
-        </div>
+          <button type="submit" class="analyze-btn" id="analyze-btn">
+            <div class="btn-spinner"></div>
+            <span class="btn-text">Start Analysis →</span>
+          </button>
+        </form>
       </div>
 
-      <!-- Summary text -->
-      <div class="glass rounded-2xl p-5">
-        <p class="text-xs text-slate-600 uppercase tracking-widest font-semibold mb-2">AI Summary</p>
-        <p id="summaryText" class="text-slate-400 text-sm leading-7"></p>
-      </div>
-
-      <!-- Critical files -->
-      <div>
-        <div class="flex items-center gap-3 mb-3">
-          <span class="w-2 h-2 rounded-full bg-red-500"></span>
-          <h3 class="text-sm font-bold text-white uppercase tracking-widest">Critical Hotspots</h3>
-          <span id="criticalCount" class="tag bg-red-500/10 text-red-400 border border-red-500/20"></span>
+      <!-- Card Footer -->
+      <div class="card-footer">
+        <div class="footer-label">Powered by</div>
+        <div class="tech-tags">
+          <span class="tech-tag">GitHub API</span>
+          <span class="tech-tag">Radon Complexity</span>
+          <span class="tech-tag">Bandit Security</span>
+          <span class="tech-tag">GPT-4o Review</span>
+          <span class="tech-tag">Gradient Boosting ML</span>
         </div>
-        <div id="criticalFiles" class="space-y-4"></div>
-      </div>
-
-      <!-- Moderate files -->
-      <div>
-        <div class="flex items-center gap-3 mb-3">
-          <span class="w-2 h-2 rounded-full bg-yellow-500"></span>
-          <h3 class="text-sm font-bold text-white uppercase tracking-widest">Moderate Risk</h3>
-          <span id="moderateCount" class="tag bg-yellow-500/10 text-yellow-400 border border-yellow-500/20"></span>
-        </div>
-        <div id="moderateFiles" class="space-y-4"></div>
-      </div>
-
-      <!-- Healthy files -->
-      <div>
-        <div class="flex items-center gap-3 mb-3">
-          <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-          <h3 class="text-sm font-bold text-white uppercase tracking-widest">Healthy Files</h3>
-          <span id="healthyCount" class="tag bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"></span>
-        </div>
-        <div id="healthyFiles" class="space-y-4"></div>
-      </div>
-
-      <!-- Recommendations -->
-      <div class="glass rounded-2xl p-5">
-        <p class="text-xs text-slate-600 uppercase tracking-widest font-semibold mb-4">Recommendations</p>
-        <ul id="recommendationsList" class="space-y-1"></ul>
       </div>
 
     </div>
-    <!-- End repoResults -->
+
+    <!-- Info Row -->
+    <div class="info-row">
+      <div class="info-item"><div class="info-dot"></div> Only public Python repositories</div>
+      <div class="info-item"><div class="info-dot"></div> Analysis takes ~60–90 seconds</div>
+      <div class="info-item"><div class="info-dot"></div> No data stored</div>
+    </div>
 
   </main>
 
-  <script src="/static/js/app.js"></script>
+  <script>
+    function goTo(url) {
+      document.getElementById('page-transition').classList.add('active');
+      setTimeout(() => { window.location.href = url; }, 500);
+    }
+
+    window.addEventListener('load', () => {
+      document.body.style.opacity = '0';
+      document.body.style.transition = 'opacity 0.4s ease';
+      setTimeout(() => { document.body.style.opacity = '1'; }, 30);
+    });
+
+    // Cursor
+    const cursor = document.getElementById('cursor');
+    const follower = document.getElementById('cursor-follower');
+    let mx=0,my=0,fx=0,fy=0;
+    document.addEventListener('mousemove', e => {
+      mx=e.clientX; my=e.clientY;
+      cursor.style.left=mx-5+'px'; cursor.style.top=my-5+'px';
+    });
+    (function af(){ fx+=(mx-fx)*0.12; fy+=(my-fy)*0.12; follower.style.left=fx-15+'px'; follower.style.top=fy-15+'px'; requestAnimationFrame(af); })();
+
+    // Form
+    const form  = document.getElementById('analyze-form');
+    const btn   = document.getElementById('analyze-btn');
+    const input = document.getElementById('repo-input');
+    const toast = document.getElementById('toast');
+
+    form.addEventListener('submit', e => {
+      const val = input.value.trim();
+      if (!val || !val.startsWith('https://github.com/')) {
+        e.preventDefault();
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3000);
+        input.focus();
+        return;
+      }
+      btn.classList.add('loading');
+      btn.disabled = true;
+    });
+  </script>
 </body>
 </html>
