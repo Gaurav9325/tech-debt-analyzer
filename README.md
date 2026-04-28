@@ -89,21 +89,61 @@ Open [http://localhost:8000](http://localhost:8000)
 ---
 
 ## 📁 Project Structure
-    tech-debt-analyzer/
-├── app/
-│ ├── services/
-│ │ ├── ai_reviewer.py # GPT-4o / Groq code review
-│ │ ├── analysis_engine.py # Main orchestrator
-│ │ ├── complexity_scanner.py # Radon complexity
-│ │ ├── security_scanner.py # Bandit security
-│ │ ├── ml_scorer.py # Gradient Boosting scorer
-│ │ ├── github_service.py # GitHub API + cloning
-│ │ └── report_generator.py # AI summary + recommendations
-│ ├── templates/
-│ │ ├── landing.html # Landing page
-│ │ └── index.html # Analyzer page
-│ └── static/
-│ └── js/app.js # Frontend logic
-├── .env # API keys (never commit this)
-├── requirements.txt
-└── run.py
+```
+└── 📁tech-debt-analyzer
+    └── 📁app
+        └── 📁__pycache__
+            ├── __init__.cpython-310.pyc
+            ├── main.cpython-310.pyc
+        └── 📁routes
+            └── 📁__pycache__
+                ├── __init__.cpython-310.pyc
+                ├── analysis.cpython-310.pyc
+                ├── pages.cpython-310.pyc
+            ├── __init__.py
+            ├── analysis.py
+            ├── pages.py
+        └── 📁schemas
+            └── 📁__pycache__
+                ├── __init__.cpython-310.pyc
+                ├── models.cpython-310.pyc
+            ├── __init__.py
+            ├── models.py
+        └── 📁services
+            └── 📁__pycache__
+                ├── __init__.cpython-310.pyc
+                ├── ai_reviewer.cpython-310.pyc
+                ├── analysis_engine.cpython-310.pyc
+                ├── complexity_scanner.cpython-310.pyc
+                ├── github_service.cpython-310.pyc
+                ├── ml_scorer.cpython-310.pyc
+                ├── report_generator.cpython-310.pyc
+                ├── security_scanner.cpython-310.pyc
+            ├── __init__.py
+            ├── ai_reviewer.py
+            ├── analysis_engine.py
+            ├── complexity_scanner.py
+            ├── github_service.py
+            ├── ml_scorer.py
+            ├── report_generator.py
+            ├── security_scanner.py
+        └── 📁templates
+            ├── index.html
+            ├── landing.html
+            ├── loading.html
+            ├── results.html
+        ├── __init__.py
+        ├── main.py
+    └── 📁ml
+        ├── model.pkl
+        ├── train_model.py
+    └── 📁static
+        └── 📁js
+            ├── app.js
+    └── 📁venv
+    ├── .env
+    ├── .gitignore
+    ├── README.md
+    ├── requirements.txt
+    └── run.py
+```
