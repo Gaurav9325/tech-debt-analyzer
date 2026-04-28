@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>TechDebt Analyzer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    code, .mono { font-family: 'JetBrains Mono', monospace; }
+    .gradient-bg {
+      background:
+        radial-gradient(ellipse at 20% 50%, rgba(16,185,129,0.07) 0%, transparent 55%),
+        radial-gradient(ellipse at 80% 10%, rgba(99,102,241,0.07) 0%, transparent 55%),
+        radial-gradient(ellipse at 60% 80%, rgba(234,179,8,0.04) 0%, transparent 50%),
+        #020817;
+    }
+    .glass {
+      background: rgba(255,255,255,0.03);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.07);
+    }
+    .glass-hover { transition: all 0.3s ease; }
+    .glass-hover:hover {
+      background: rgba(255,255,255,0.05);
+      border-color: rgba(16,185,129,0.25);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    }
+    .glow-green  { box-shadow: 0 0 40px rgba(16,185,129,0.12); }
+    .glow-red    { box-shadow: 0 0 30px rgba(239,68,68,0.08); }
+    .glow-yellow { box-shadow: 0 0 30px rgba(234,179,8,0.08); }
+    .fade-up { animation: fadeUp 0.5s ease forwards; opacity: 0; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .s1{animation-delay:.05s} .s2{animation-delay:.15s}
+    .s3{animation-delay:.25s} .s4{animation-delay:.35s}
+    .s5{animation-delay:.45s} .s6{animation-delay:.55s}
+    .issue-card {
+      border-left: 2px solid var(--ic);
+      transition: all 0.2s ease;
+    }
+    .issue-card:hover {
+      background: rgba(255,255,255,0.025);
+      padding-left: 1.25rem;
+    }
+    .tag {
+      font-size: 0.6rem;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .progress-bar {
+      height: 3px; border-radius: 4px;
+      background: rgba(255,255,255,0.05);
+      overflow: hidden; flex: 1;
+    }
+    .progress-fill {
+      height: 100%; border-radius: 4px;
+      width: 0%; transition: width 0.5s ease;
+    }
+    .score-bar {
+      width: 3px; height: 52px; border-radius: 4px;
+      background: rgba(255,255,255,0.05); overflow: hidden;
+    }
+    .score-bar-fill {
+      width: 100%; border-radius: 4px;
+      transition: height 1.2s ease;
+    }
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+  </style>
+</head>
+<body class="gradient-bg text-slate-100 min-h-screen">
+
+  <!-- Navbar -->
+  <nav class="sticky top-0 z-50 glass border-b border-white/5">
+    <div class="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-emerald-500/15 border border-emerald-500/20 flex items-center justify-center">
+          <span class="text-sm">⚡</span>
+        </div>
+        <span class="font-bold text-white text-sm">TechDebt</span>
+        <span class="font-light text-emerald-400 text-sm">Analyzer</span>
+        <span class="tag bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">AI</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <button id="themeToggle"
+          class="w-8 h-8 rounded-lg glass flex items-center justify-center hover:border-emerald-500/30 transition text-xs">
+          🌙
+        </button>
+        <a href="/"
+          class="px-4 py-2 rounded-xl bg-slate-800 border border-white/10 text-slate-400 hover:text-white text-xs font-semibold transition">
+          ← Home
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="max-w-7xl mx-auto px-6 py-14 space-y-8">
+
+    <!-- Hero -->
+    <section class="text-center space-y-5 fade-up s1">
+      <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass text-xs text-slate-500 border border-white/5">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+        Real-time · Line-level · AI-powered analysis
+      </div>
+      <h1 class="text-4xl md:text-6xl font-extrabold tracking-tight leading-tight">
+        Find
+        <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400">
+          technical debt
+        </span>
+        <br/>before it finds you
+      </h1>
+      <p class="text-slate-500 text-base md:text-lg max-w-lg mx-auto leading-relaxed">
+        Paste any public GitHub repository URL and get a full AI-powered health report in under 90 seconds.
+      </p>
+    </section>
+
+    <!-- Panel: GitHub Repo -->
+    <section id="panelRepo" class="glass rounded-2xl p-6 glow-green fade-up s2">
+      <p class="text-slate-500 text-sm mb-4">
+        Analyze any public Python GitHub repository — commit history, all files, security and AI review.
+      </p>
+      <div class="flex flex-col md:flex-row gap-3">
+        <div class="relative flex-1">
+          <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 pointer-events-none">🔗</span>
+          <input id="repoUrl" type="text"
+            placeholder="https://github.com/username/repository"
+            class="w-full pl-10 pr-4 py-3.5 rounded-xl bg-white/5 border border-white/8 focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/15 outline-none text-slate-200 placeholder-slate-600 text-sm transition"
+          />
+        </div>
+        <button id="analyzeBtn"
+          class="px-8 py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-slate-950 font-bold text-sm transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-emerald-500/25 whitespace-nowrap">
+          Analyze Repo →
+        </button>
+      </div>
+      <div class="mt-4 flex flex-wrap gap-2">
+        <span class="tag bg-slate-800/80 text-slate-500 border border-white/5">GitHub API</span>
+        <span class="tag bg-slate-800/80 text-slate-500 border border-white/5">Radon Complexity</span>
+        <span class="tag bg-slate-800/80 text-slate-500 border border-white/5">Bandit Security</span>
+        <span class="tag bg-slate-800/80 text-slate-500 border border-white/5">GPT-4o Review</span>
+        <span class="tag bg-slate-800/80 text-slate-500 border border-white/5">Gradient Boosting ML</span>
+      </div>
+    </section>
+
+    <!-- Loading -->
+    <div id="loading" class="hidden">
+      <div class="glass rounded-2xl p-10 text-center">
+        <div class="relative w-14 h-14 mx-auto mb-6">
+          <div class="absolute inset-0 rounded-full border-2 border-white/5"></div>
+          <div class="absolute inset-0 rounded-full border-2 border-emerald-500 border-t-transparent animate-spin"></div>
+          <span class="absolute inset-0 flex items-center justify-center text-lg" id="loadingIcon">⚙️</span>
+        </div>
+        <h3 class="text-white font-semibold text-lg mb-1" id="loadingTitle">Analyzing...</h3>
+        <p class="text-slate-600 text-sm mb-8" id="loadingSubtitle">Please wait</p>
+        <div id="loadingSteps" class="space-y-4 text-left max-w-md mx-auto"></div>
+      </div>
+    </div>
+
+    <!-- Error -->
+    <div id="errorBox" class="hidden glass rounded-2xl p-5 border border-red-500/20 glow-red">
+      <div class="flex items-start gap-3">
+        <span class="text-xl shrink-0">❌</span>
+        <div>
+          <p class="text-red-400 font-semibold text-sm mb-1">Analysis Failed</p>
+          <p id="errorMsg" class="text-slate-400 text-sm leading-6"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Repo Results -->
+    <div id="repoResults" class="hidden space-y-6 fade-up s4">
+
+      <!-- Summary bar -->
+      <div class="glass rounded-2xl p-5 flex flex-col md:flex-row md:items-center gap-5">
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-xs text-slate-600 font-semibold uppercase tracking-widest">Repository</span>
+          </div>
+          <a id="repoLink" href="#" target="_blank"
+            class="mono text-sm text-emerald-400 hover:text-emerald-300 truncate block transition">
+          </a>
+        </div>
+        <div class="flex flex-wrap gap-6 shrink-0">
+          <div class="text-center">
+            <p class="text-2xl font-black text-white" id="statTotal">0</p>
+            <p class="text-xs text-slate-600 mt-0.5">Files</p>
+          </div>
+          <div class="text-center">
+            <p class="text-2xl font-black text-red-400" id="statCritical">0</p>
+            <p class="text-xs text-slate-600 mt-0.5">Critical</p>
+          </div>
+          <div class="text-center">
+            <p class="text-2xl font-black text-yellow-400" id="statModerate">0</p>
+            <p class="text-xs text-slate-600 mt-0.5">Moderate</p>
+          </div>
+          <div class="text-center">
+            <p class="text-2xl font-black text-slate-300" id="statIssues">0</p>
+            <p class="text-xs text-slate-600 mt-0.5">Issues</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Summary text -->
+      <div class="glass rounded-2xl p-5">
+        <p class="text-xs text-slate-600 uppercase tracking-widest font-semibold mb-2">AI Summary</p>
+        <p id="summaryText" class="text-slate-400 text-sm leading-7"></p>
+      </div>
+
+      <!-- Critical files -->
+      <div>
+        <div class="flex items-center gap-3 mb-3">
+          <span class="w-2 h-2 rounded-full bg-red-500"></span>
+          <h3 class="text-sm font-bold text-white uppercase tracking-widest">Critical Hotspots</h3>
+          <span id="criticalCount" class="tag bg-red-500/10 text-red-400 border border-red-500/20"></span>
+        </div>
+        <div id="criticalFiles" class="space-y-4"></div>
+      </div>
+
+      <!-- Moderate files -->
+      <div>
+        <div class="flex items-center gap-3 mb-3">
+          <span class="w-2 h-2 rounded-full bg-yellow-500"></span>
+          <h3 class="text-sm font-bold text-white uppercase tracking-widest">Moderate Risk</h3>
+          <span id="moderateCount" class="tag bg-yellow-500/10 text-yellow-400 border border-yellow-500/20"></span>
+        </div>
+        <div id="moderateFiles" class="space-y-4"></div>
+      </div>
+
+      <!-- Healthy files -->
+      <div>
+        <div class="flex items-center gap-3 mb-3">
+          <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+          <h3 class="text-sm font-bold text-white uppercase tracking-widest">Healthy Files</h3>
+          <span id="healthyCount" class="tag bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"></span>
+        </div>
+        <div id="healthyFiles" class="space-y-4"></div>
+      </div>
+
+      <!-- Recommendations -->
+      <div class="glass rounded-2xl p-5">
+        <p class="text-xs text-slate-600 uppercase tracking-widest font-semibold mb-4">Recommendations</p>
+        <ul id="recommendationsList" class="space-y-1"></ul>
+      </div>
+
+    </div>
+    <!-- End repoResults -->
+
+  </main>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
